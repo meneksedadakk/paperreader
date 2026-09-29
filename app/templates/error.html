@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Hata {{ code }}{% endblock %}
+{% block content %}
+<article>
+  <h2>{{ code }}</h2>
+  <p>{{ message }}</p>
+  <a href="{{ url_for('auth.index') }}" role="button">Ana sayfa</a>
+</article>
+{% endblock %}

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{% block title %}Optik Sınav Okuyucu{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
+<body>
+  {% macro logo() %}
+  <svg viewBox="0 0 64 64" aria-hidden="true">
+    <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9f0a"/><stop offset="1" stop-color="#ff375f"/></linearGradient></defs>
+    <rect width="64" height="64" rx="15" fill="url(#lg)"/>
+    <g fill="none" stroke="#fff" stroke-width="3" opacity=".95">
+      <circle cx="19" cy="21" r="5"/><circle cx="32" cy="21" r="5"/><circle cx="45" cy="21" r="5"/>
+      <circle cx="19" cy="43" r="5"/><circle cx="45" cy="43" r="5"/>
+    </g>
+    <circle cx="32" cy="43" r="5.5" fill="#fff"/>
+  </svg>
+  {% endmacro %}
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="{{ url_for('auth.index') }}" class="brand">{{ logo() }}<span>Optik Sınav Okuyucu</span></a>
+      {% if current_user.is_authenticated %}
+      <nav class="nav-links">
+        {% set ep = request.endpoint or '' %}
+        {% if current_user.is_teacher %}
+          <a href="{{ url_for('teacher.dashboard') }}" class="{{ 'active' if ep.startswith('teacher.') and ep != 'teacher.students' }}">Sınavlar</a>
+          <a href="{{ url_for('teacher.students') }}" class="{{ 'active' if ep == 'teacher.students' }}">Öğrenciler</a>
+        {% else %}
+          <a href="{{ url_for('student.dashboard') }}" class="{{ 'active' if ep.startswith('student.') }}">Sınavlarım</a>
+        {% endif %}
+        <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <button type="submit" class="secondary small">Çıkış · {{ current_user.full_name }}</button>
+        </form>
+      </nav>
+      {% endif %}
+    </div>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <article class="flash flash-{{ category }}" role="alert">{{ message }}</article>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Sınavlarım · Optik Sınav Okuyucu{% endblock %}
+{% block content %}
+<p class="eyebrow">Merhaba, {{ current_user.full_name }}</p>
+<h2>Sınavlarım</h2>
+{% if not rows %}
+  <article><p class="muted">Şu anda yayında bir sınav yok.</p></article>
+{% endif %}
+<div class="table-wrap">
+{% if rows %}
+<table>
+  <thead><tr><th>Sınav</th><th>Durum</th><th class="num">Net</th><th></th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td><strong>{{ r.exam.name }}</strong>{% if r.exam.description %}<br><small class="muted">{{ r.exam.description }}</small>{% endif %}</td>
+      <td>
+        {% if r.submission %}<span class="badge ok">Gönderildi</span>
+        {% elif r.pending %}<span class="badge warn">Onay bekliyor</span>
+        {% else %}<span class="badge">Yüklenmedi</span>{% endif %}
+      </td>
+      <td class="num">{% if r.submission %}{{ '%.2f'|format(r.submission.net) }}{% else %}—{% endif %}</td>
+      <td>
+        {% if r.submission %}<a role="button" class="outline" href="{{ url_for('student.result', exam_id=r.exam.id) }}">Sonucu gör</a>
+        {% elif r.pending %}<a role="button" href="{{ url_for('student.review', exam_id=r.exam.id) }}">Onaya devam et</a>
+        {% else %}<a role="button" href="{{ url_for('student.upload', exam_id=r.exam.id) }}">Optik yükle</a>{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+</div>
+{% endblock %}

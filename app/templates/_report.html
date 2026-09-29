@@ -1,0 +1,96 @@
+{# Shared analysis view. Usage: {% from "_report.html" import report %}{{ report(rep, submission_id, show_key) }} #}
+{% macro net_fmt(v) %}{{ '%.2f'|format(v) }}{% endmacro %}
+
+{% macro report(rep) %}
+{% set sub = rep.submission %}
+<section>
+  <div class="stat-grid">
+    <div class="stat-card"><h4>Toplam</h4>
+      <div class="net">{{ net_fmt(rep.total.net) }}</div><small>net</small>
+      <small>{{ rep.total.correct }} D · {{ rep.total.wrong }} Y · {{ rep.total.blank }} B</small></div>
+    {% for t in rep.tests %}
+    <div class="stat-card"><h4>{{ t.name }}</h4>
+      <div class="net">{{ net_fmt(t.stats.net) }}</div><small>net</small>
+      <small>{{ t.stats.correct }} D · {{ t.stats.wrong }} Y · {{ t.stats.blank }} B</small></div>
+    {% endfor %}
+  </div>
+  <small class="muted">Net = Doğru − Yanlış ÷ {{ '%g'|format(rep.exam.wrong_penalty) }}
+    {%- if not rep.exam.wrong_penalty %} (yanlışlar doğruyu götürmez){% endif %}</small>
+</section>
+
+<section>
+  <h3>Ders bazında sonuç</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Test</th><th>Ders</th><th class="num">Doğru</th><th class="num">Yanlış</th><th class="num">Boş</th><th class="num">Net</th></tr></thead>
+    <tbody>
+    {% for t in rep.tests %}{% for s in t.subjects %}
+      <tr><td>{{ t.name if loop.first else '' }}</td><td>{{ s.name }}</td>
+        <td class="num">{{ s.correct }}</td><td class="num">{{ s.wrong }}</td><td class="num">{{ s.blank }}</td>
+        <td class="num"><strong>{{ net_fmt(s.net) }}</strong></td></tr>
+    {% endfor %}{% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h3>Konu analizi</h3>
+  {% if rep.weak_topics %}
+    <p><strong>Eksik konular</strong> (başarı %{{ (config.WEAK_TOPIC_THRESHOLD * 100)|int }} altında):</p>
+    <ul>{% for r in rep.weak_topics %}
+      <li class="weak">{{ r.subject }} · {{ r.topic }} — {{ r.correct }}/{{ r.total }} doğru (%{{ (r.ratio * 100)|round|int }})</li>
+    {% endfor %}</ul>
+  {% else %}
+    <p class="muted">Eksik konu bulunmuyor{% if not rep.chart.labels %} (bu sınavda konu bilgisi girilmemiş){% endif %}.</p>
+  {% endif %}
+  {% if rep.chart.labels %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Ders</th><th>Konu</th><th class="num">Doğru / Soru</th><th>Başarı</th></tr></thead>
+    <tbody>
+    {% for r in rep.topics if r.topic != 'Belirtilmemiş' %}
+      <tr><td>{{ r.subject }}</td><td>{{ r.topic }}</td><td class="num">{{ r.correct }} / {{ r.total }}</td>
+        <td><div class="topic-bar {{ 'weak-bar' if r.weak }}"><span style="width: {{ (r.ratio * 100)|round|int }}%"></span></div>
+          <small>%{{ (r.ratio * 100)|round|int }}</small></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <canvas id="topicChart" height="{{ [rep.chart.labels|length * 22 + 60, 120]|max }}"
+          data-labels='{{ rep.chart.labels|tojson|forceescape }}' data-values='{{ rep.chart.percents|tojson|forceescape }}'
+          data-threshold="{{ (config.WEAK_TOPIC_THRESHOLD * 100)|int }}"></canvas>
+  {% endif %}
+</section>
+
+<section>
+  <h3>Soru soru sonuç</h3>
+  <p class="legend">
+    <span><i style="background:#dff3e6;border:1px solid var(--ok)"></i>Doğru</span>
+    <span><i style="background:#fbe2e2;border:1px solid var(--bad)"></i>Yanlış</span>
+    <span><i style="background:#eceef1"></i>Boş</span>
+    <span><i style="border:2px dashed var(--warn)"></i>Öğrencinin düzelttiği</span>
+  </p>
+  {% for t in rep.tests %}
+  <details {{ 'open' if loop.first }}>
+    <summary>{{ t.name }} <small class="muted">({{ t.stats.correct }} D · {{ t.stats.wrong }} Y · {{ t.stats.blank }} B)</small></summary>
+    <div class="qgrid">
+      {% for q in t.questions %}
+        <div class="q {{ q.status }} {{ 'edited' if q.edited }}" title="{{ q.subject }}{{ ' · ' + q.topic if q.topic }}">
+          <b>{{ q.local }}</b>
+          {% if q.correct is none %}iptal{% else %}
+          {{ '*' if q.mark == '*' else (q.mark or '—') }}{% if q.status == 'wrong' %} → {{ q.correct }}{% endif %}
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endfor %}
+</section>
+
+<section>
+  <h3>Optik form fotoğrafı</h3>
+  <div class="grid">
+    <figure><img class="overlay-img" src="{{ url_for('files.submission_file', sub_id=sub.id, kind='image') }}" alt="Yüklenen fotoğraf">
+      <figcaption>Yüklenen fotoğraf</figcaption></figure>
+    <figure><img class="overlay-img" src="{{ url_for('files.submission_file', sub_id=sub.id, kind='debug') }}" alt="Okunan işaretler">
+      <figcaption>Okunan işaretler (yeşil: işaret, sarı: şüpheli)</figcaption></figure>
+  </div>
+</section>
+{% endmacro %}

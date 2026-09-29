@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Optik yükle · {{ exam.name }}{% endblock %}
+{% block content %}
+<h2>{{ exam.name }} — optik yükle</h2>
+<article>
+  <p><strong>Önemli:</strong> Her sınav için yalnızca <strong>bir kez</strong> kesin gönderim yapabilirsiniz.
+     Fotoğrafı yükledikten sonra okunan cevapları kontrol edip <em>"Onayla ve Gönder"</em> demeden hakkınız harcanmaz.</p>
+  <ul>
+    <li>Formun <strong>siyah çerçevesinin 4 köşesi</strong> da fotoğrafta görünmeli.</li>
+    <li>Düz bir zemine koyun, gölge düşürmeyin, telefonu formun tam üstünden tutun.</li>
+    <li>Kodlamalar koyu ve kurşun kalemle yapılmış olmalı.</li>
+  </ul>
+  {% if pending %}
+    <p class="flash flash-info">Daha önce yüklediğiniz bir taslak var. <a href="{{ url_for('student.review', exam_id=exam.id) }}">Taslağa dön</a>
+       veya yeni bir fotoğraf yükleyerek taslağın üzerine yazın.</p>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" action="{{ url_for('student.upload', exam_id=exam.id) }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <label>Optik form fotoğrafı
+      <input type="file" name="photo" id="photo" accept="image/*" capture="environment" required>
+    </label>
+    <img id="preview" class="overlay-img" alt="" hidden>
+    <button type="submit">Yükle ve oku</button>
+  </form>
+</article>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.getElementById("photo").addEventListener("change", function (e) {
+    const f = e.target.files[0], img = document.getElementById("preview");
+    if (!f) { img.hidden = true; return; }
+    img.src = URL.createObjectURL(f);
+    img.hidden = false;
+  });
+</script>
+{% endblock %}

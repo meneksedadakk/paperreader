@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Kontrol et · {{ exam.name }}{% endblock %}
+{% block content %}
+<h2>{{ exam.name }} — okunan cevapları kontrol edin</h2>
+<article>
+  <p>{{ answered }} soru işaretli, {{ blank }} soru boş
+     {%- if doubles %}, <strong>{{ doubles }} soruda birden fazla şık işaretli</strong>{% endif %}.</p>
+  {% if flagged %}
+    <p class="flash flash-warning">Sistem <strong>{{ flagged|length }} soruyu</strong> emin okuyamadı (sarı). Yalnızca bu soruları düzeltebilirsiniz.
+       Birden fazla şık işaretli sorular düzeltilmezse <strong>yanlış</strong> sayılır.</p>
+  {% else %}
+    <p class="flash flash-success">Tüm sorular net okundu.</p>
+  {% endif %}
+</article>
+
+<form method="post" action="{{ url_for('student.confirm', exam_id=exam.id) }}">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  {% for t in tests %}
+  <details {{ 'open' if loop.first or t.questions|selectattr('flagged')|list }}>
+    <summary>{{ t.name }}</summary>
+    <div class="qgrid">
+      {% for q in t.questions %}
+        <div class="q {{ 'flagged' if q.flagged }}">
+          <b>{{ q.local }}</b>
+          {% if q.flagged %}
+            <select name="edit_{{ q.q }}" aria-label="{{ t.name }} {{ q.local }}. soru">
+              <option value="" {{ 'selected' if q.mark in (none, '*') }}>{{ 'Çoklu' if q.mark == '*' else 'Boş' }}{% if q.mark == '*' %} (yanlış){% endif %}</option>
+              {% for o in 'ABCDE' %}<option value="{{ o }}" {{ 'selected' if q.mark == o }}>{{ o }}</option>{% endfor %}
+            </select>
+          {% else %}{{ q.mark or '—' }}{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endfor %}
+
+  <details>
+    <summary>Okunan işaretler (fotoğraf üzerinde)</summary>
+    <img class="overlay-img" src="{{ url_for('files.pending_file', exam_id=exam.id, kind='debug') }}" alt="Okunan işaretler">
+  </details>
+
+  <article>
+    <label>
+      <input type="checkbox" name="understood" required>
+      Bu gönderimin <strong>kesin</strong> olduğunu, bir daha yükleme yapamayacağımı anlıyorum.
+    </label>
+    <div class="grid">
+      <button type="submit">Onayla ve Gönder</button>
+      <a role="button" class="secondary outline" href="{{ url_for('student.upload', exam_id=exam.id) }}">Fotoğrafı yeniden yükle</a>
+    </div>
+  </article>
+</form>
+{% endblock %}

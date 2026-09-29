@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ exam.name }} · Sonuçlar{% endblock %}
+{% block content %}
+<div class="grid">
+  <div>
+    <h2>{{ exam.name }}
+      {% if exam.is_active %}<span class="badge ok">Yayında</span>{% else %}<span class="badge">Taslak</span>{% endif %}</h2>
+    {% if exam.description %}<p class="muted">{{ exam.description }}</p>{% endif %}
+    <small class="muted">Yanlış katsayısı: {{ '%g'|format(exam.wrong_penalty) }}</small>
+  </div>
+  <div style="text-align:right">
+    <a role="button" class="outline small" href="{{ url_for('teacher.exam_edit', exam_id=exam.id) }}">Anahtarı düzenle</a>
+    <a role="button" class="outline small secondary" href="{{ url_for('teacher.exam_csv', exam_id=exam.id) }}">CSV indir</a>
+    <form method="post" action="{{ url_for('teacher.exam_toggle', exam_id=exam.id) }}" class="inline">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button type="submit" class="small">{{ 'Yayından kaldır' if exam.is_active else 'Yayınla' }}</button>
+    </form>
+  </div>
+</div>
+
+<section>
+  <div class="stat-grid">
+    <div class="stat-card"><h4>Gönderen öğrenci</h4><div class="net" id="stat-submitted">–</div></div>
+    <div class="stat-card"><h4>Ortalama net</h4><div class="net" id="stat-avg">–</div></div>
+    <div class="stat-card"><h4>Son güncelleme</h4><div id="stat-updated" class="muted">–</div></div>
+  </div>
+</section>
+
+<section>
+  <h3>Öğrenciler</h3>
+  <noscript><p class="flash flash-warning">Canlı tablo için JavaScript gerekir.</p></noscript>
+  <div class="table-wrap">
+    <table id="live" class="sortable"
+           data-url="{{ url_for('api.exam_results', exam_id=exam.id) }}"
+           data-detail="{{ url_for('teacher.student_detail', exam_id=exam.id, student_id=0) }}"
+           data-poll="{{ config.LIVE_POLL_SECONDS }}"
+           data-tests='{{ test_pairs|tojson|forceescape }}'>
+      <thead><tr></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <small class="muted">Tablo her {{ config.LIVE_POLL_SECONDS }} saniyede bir kendiliğinden yenilenir. Başlığa tıklayarak sıralayabilirsiniz. D/Y/B = doğru/yanlış/boş.</small>
+</section>
+
+<section>
+  <h3>Sınıf genelinde konu başarısı</h3>
+  <div class="table-wrap"><table id="topics"><thead>
+    <tr><th>Ders</th><th>Konu</th><th class="num">Doğru / Soru</th><th>Başarı</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section>
+  <h3>En çok yanlış yapılan sorular</h3>
+  <ol id="missed"></ol>
+</section>
+
+<script id="initial-data" type="application/json">{{ data|tojson }}</script>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/live_table.js') }}"></script>
+{% endblock %}

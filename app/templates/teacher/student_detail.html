@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_report.html" import report %}
+{% block title %}{{ student.full_name }} · {{ exam.name }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('teacher.exam_detail', exam_id=exam.id) }}">← {{ exam.name }}</a></p>
+<div class="grid">
+  <div>
+    <h2>{{ student.full_name }} <small class="muted">({{ student.username }})</small></h2>
+    <p class="muted">Gönderim: {{ rep.submission.submitted_at.strftime('%d.%m.%Y %H:%M') }}
+      {%- if rep.edited_count %} · öğrenci <strong>{{ rep.edited_count }}</strong> soruyu kendisi düzeltti (kesikli çerçeve){% endif %}</p>
+  </div>
+  <div style="text-align:right">
+    <form method="post" action="{{ url_for('teacher.submission_reset', exam_id=exam.id, student_id=student.id) }}" class="inline"
+          onsubmit="return confirm('Bu öğrencinin gönderimi silinecek ve yeniden yükleme yapabilecek. Emin misiniz?');">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button type="submit" class="small secondary outline">Gönderimi sıfırla</button>
+    </form>
+  </div>
+</div>
+{{ report(rep) }}
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_report.html" import report %}
+{% block title %}Sonuç · {{ exam.name }}{% endblock %}
+{% block content %}
+<h2>{{ exam.name }} — sonucunuz</h2>
+<p class="muted">Gönderim: {{ rep.submission.submitted_at.strftime('%d.%m.%Y %H:%M') }}
+  {%- if rep.edited_count %} · {{ rep.edited_count }} soruyu kendiniz düzelttiniz{% endif %}</p>
+{{ report(rep) }}
+<a role="button" class="outline" href="{{ url_for('student.dashboard') }}">← Sınavlarım</a>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

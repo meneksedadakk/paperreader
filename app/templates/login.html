@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Giriş · Optik Sınav Okuyucu{% endblock %}
+{% block content %}
+<article class="login-card">
+  <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+    <defs><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9f0a"/><stop offset="1" stop-color="#ff375f"/></linearGradient></defs>
+    <rect width="64" height="64" rx="15" fill="url(#lg2)"/>
+    <g fill="none" stroke="#fff" stroke-width="3" opacity=".95">
+      <circle cx="19" cy="21" r="5"/><circle cx="32" cy="21" r="5"/><circle cx="45" cy="21" r="5"/>
+      <circle cx="19" cy="43" r="5"/><circle cx="45" cy="43" r="5"/>
+    </g>
+    <circle cx="32" cy="43" r="5.5" fill="#fff"/>
+  </svg>
+  <h2>Hoş geldiniz</h2>
+  <p class="muted">Giriş türünüzü seçip devam edin.</p>
+  <form method="post" action="{{ url_for('auth.login') }}" id="login-form">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div class="role-switch" role="radiogroup" aria-label="Giriş türü">
+      <label>
+        <input type="radio" name="role" value="student" {{ 'checked' if role == 'student' }}>
+        <span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="M6 10.5v4.5c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/></svg>
+          Öğrenci
+        </span>
+      </label>
+      <label>
+        <input type="radio" name="role" value="teacher" {{ 'checked' if role == 'teacher' }}>
+        <span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          Öğretmen
+        </span>
+      </label>
+    </div>
+    <label>Kullanıcı adı
+      <input name="username" autocomplete="username" required autofocus>
+    </label>
+    <label>Şifre
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit">Giriş yap</button>
+  </form>
+</article>
+{% endblock %}
+{% block scripts %}
+<script>
+  // remember the last chosen role on this device (only when the server did not just re-render after an error)
+  (function () {
+    const radios = document.querySelectorAll('input[name="role"]');
+    const failed = document.querySelector(".flash-danger");
+    try {
+      const saved = localStorage.getItem("loginRole");
+      if (saved && !failed) radios.forEach(r => { r.checked = r.value === saved; });
+    } catch (_) {}
+    radios.forEach(r => r.addEventListener("change", () => {
+      try { localStorage.setItem("loginRole", r.value); } catch (_) {}
+    }));
+  })();
+</script>
+{% endblock %}
