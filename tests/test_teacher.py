@@ -40,6 +40,11 @@ def test_dashboard_starts_empty(teacher):
     assert r.status_code == 200 and "Henüz sınav yok" in r.get_data(as_text=True)
 
 
+def test_dashboard_offers_the_blank_optic_form(teacher):
+    html = teacher.get("/teacher/").get_data(as_text=True)
+    assert "Boş optik formu indir" in html and "/forms/tyt_120.pdf" in html
+
+
 def test_new_exam_form_has_all_120_rows_and_required_penalty(teacher):
     html = teacher.get("/teacher/exams/new").get_data(as_text=True)
     assert 'name="ans_1"' in html and 'name="ans_120"' in html and 'name="ans_121"' not in html
